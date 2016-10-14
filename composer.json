@@ -1,0 +1,24 @@
+{
+  "name": "axis/axis",
+  "description": "The Axis Framework.",
+  "keywords": ["framework", "axis"],
+  "license": "MIT",
+  "type": "project",
+  "require": {
+    "php": ">=7.0.0"
+  },
+  "require-dev": {
+    "fzaninotto/faker": "*",
+    "codeception/codeception": "*",
+    "codeception/specify": "*",
+    "codeception/verify": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "axis\\": "./",
+      "axis\\exceptions\\": "./extra/exceptions",
+      "axis\\specification\\": "./extra/specification",
+      "axis\\di\\": "./extra/di"
+    }
+  }
+}
