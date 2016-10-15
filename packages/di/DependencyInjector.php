@@ -4,7 +4,6 @@ use axis\events\Event;
 use axis\exceptions\CannotInstantiateException;
 use axis\exceptions\UnexpectedVariableTypeException;
 use axis\exceptions\UnresolvedClassException;
-use axis\specification\di\DependencyDefinitionInterface;
 use axis\specification\di\DependencyInjectorInterface;
 use ReflectionClass;
 use ReflectionMethod;
