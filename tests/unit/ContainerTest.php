@@ -1,7 +1,9 @@
 <?php
 
-use axis\exceptions\CannotInstantiateException;
+use axis\di\DependencyInjector;
 use axis\exceptions\UnresolvedClassException;
+use axis\specification\di\DependencyDefinitionInterface;
+use axis\specification\events\EventInterface;
 use axis\tests\mocks\car\CastrolMotorOil;
 use axis\tests\mocks\car\EngineInterface;
 use axis\tests\mocks\car\FroEngine;
@@ -28,24 +30,25 @@ class ContainerTest extends \Codeception\Test\Unit
 
     public function testCommunication()
     {
-//        $this->specify('must resolve dependencies and dependencies of dependencies', function () {
-//            $container = new Container();
-//            $container->set(CarInterface::class, BMWCar::class);
-//            $this->tester->expectException(new UnresolvedClassException(EngineInterface::class), function () use ($container) {
-//                $container->get(CarInterface::class, [8, 11]);
-//            });
-//            $container->set(EngineInterface::class, FroEngine::class);
-//            $this->tester->expectException(new UnresolvedClassException(MotorOilInterface::class), function () use ($container) {
-//                $container->get(CarInterface::class, [8, 11]);
-//            });
-//            $container->set(MotorOilInterface::class, CastrolMotorOil::class);
-//            $car = $container->get(CarInterface::class, [8, 11]);
-//            expect($car)->isInstanceOf(BMWCar::class);
-//            $this->tester->expectException(new CannotInstantiateException(BMWCar::class, 'is not enough arguments passed'), function () use ($container) {
-//                $container->get(CarInterface::class);
-//            });
-//        });
-//
+        $this->specify('must resolve dependencies and dependencies of dependencies', function () {
+            $container = new DependencyInjector();
+            $container->set(CarInterface::class, BMWCar::class)
+                ->constructorList([2.4, 16])
+                ->onEvent(DependencyDefinitionInterface::EVENT_BEFORE_CREATE, function (EventInterface $event) {
+                    expect($event->getContext())->isInstanceOf(DependencyDefinitionInterface::class);
+                });
+            $this->tester->expectException(new UnresolvedClassException(EngineInterface::class), function () use ($container) {
+                $container->get(CarInterface::class);
+            });
+            $container->set(EngineInterface::class, FroEngine::class);
+            $this->tester->expectException(new UnresolvedClassException(MotorOilInterface::class), function () use ($container) {
+                $container->get(CarInterface::class);
+            });
+            $container->set(MotorOilInterface::class, CastrolMotorOil::class);
+            $car = $container->get(CarInterface::class);
+            expect($car)->isInstanceOf(BMWCar::class);
+        });
+
 //        $this->specify('must create singletons', function () {
 //            $container = new Container();
 //            $container->setSingleton(EngineInterface::class, FroEngine::class);

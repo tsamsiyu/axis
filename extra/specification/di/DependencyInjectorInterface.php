@@ -1,11 +1,11 @@
 <?php namespace axis\specification\di;
 
-interface DI
+interface DependencyInjectorInterface
 {
     /**
      * @param string $contract
      * @param string $agent
-     * @return DependencyDefinition
+     * @return DependencyDefinitionInterface
      */
     public function set(string $contract, string $agent);
 
@@ -30,7 +30,7 @@ interface DI
     public function has(string $contract);
 
     /**
-     * @param string|DependencyDefinition $agent
+     * @param string|DependencyDefinitionInterface $agent
      * @return mixed
      */
     public function resolve($agent);

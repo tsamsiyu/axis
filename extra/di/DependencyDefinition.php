@@ -1,7 +1,12 @@
 <?php namespace axis\di;
 
-class DependencyDefinition implements \axis\specification\di\DependencyDefinition
+use axis\events\EventEmitterTrait;
+use \axis\specification\di\DependencyDefinitionInterface;
+
+class DependencyDefinition implements DependencyDefinitionInterface
 {
+    use EventEmitterTrait;
+
     private $_scope = self::SCOPE_PROTOTYPE;
     private $_agent;
     private $_constructorList = [];
@@ -14,7 +19,7 @@ class DependencyDefinition implements \axis\specification\di\DependencyDefinitio
 
     /**
      * @param array $map
-     * @return \axis\specification\di\DependencyDefinition
+     * @return \axis\specification\di\DependencyDefinitionInterface
      */
     public function constructorMap(array $map)
     {
@@ -24,7 +29,7 @@ class DependencyDefinition implements \axis\specification\di\DependencyDefinitio
 
     /**
      * @param array $list
-     * @return \axis\specification\di\DependencyDefinition
+     * @return \axis\specification\di\DependencyDefinitionInterface
      */
     public function constructorList(array $list)
     {
@@ -33,7 +38,7 @@ class DependencyDefinition implements \axis\specification\di\DependencyDefinitio
     }
 
     /**
-     * @return \axis\specification\di\DependencyDefinition
+     * @return \axis\specification\di\DependencyDefinitionInterface
      */
     public function singleton()
     {
@@ -42,7 +47,7 @@ class DependencyDefinition implements \axis\specification\di\DependencyDefinitio
     }
 
     /**
-     * @return \axis\specification\di\DependencyDefinition
+     * @return \axis\specification\di\DependencyDefinitionInterface
      */
     public function prototype()
     {

@@ -1,9 +1,14 @@
 <?php namespace axis\specification\di;
 
-interface DependencyDefinition
+use axis\specification\events\EventEmitterInterface;
+
+interface DependencyDefinitionInterface extends EventEmitterInterface
 {
-    const SCOPE_SINGLETON = 'singleton';
-    const SCOPE_PROTOTYPE = 'prototype';
+    const SCOPE_SINGLETON = 'scopeSingleton';
+    const SCOPE_PROTOTYPE = 'scopePrototype';
+
+    const EVENT_BEFORE_CREATE = 'eventBeforeCreate';
+    const EVENT_AFTER_CREATE = 'eventAfterCreate';
 
     /**
      * @return string

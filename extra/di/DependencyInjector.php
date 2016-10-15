@@ -1,13 +1,15 @@
 <?php namespace axis\di;
 
+use axis\events\Event;
 use axis\exceptions\CannotInstantiateException;
 use axis\exceptions\UnexpectedVariableTypeException;
 use axis\exceptions\UnresolvedClassException;
-use axis\specification\di\DependencyDefinition as DependencyDefinitionInterface;
+use axis\specification\di\DependencyDefinitionInterface as DependencyDefinitionInterface;
+use axis\specification\di\DependencyInjectorInterface;
 use ReflectionClass;
 use ReflectionMethod;
 
-class DI implements \axis\specification\di\DI
+class DependencyInjector implements DependencyInjectorInterface
 {
     /**
      * @var DependencyDefinitionInterface[]
@@ -100,20 +102,36 @@ class DI implements \axis\specification\di\DI
     public function resolve($agentOrDefinition)
     {
         if (is_string($agentOrDefinition)) {
-
+            $definition = new DependencyDefinition($agentOrDefinition);
+            return $this->resolve($definition);
         } else if ($agentOrDefinition instanceof DependencyDefinitionInterface) {
             $classInspector = new ReflectionClass($agentOrDefinition->getAgent());
             $constructorInspector = $classInspector->getConstructor();
             if ($constructorInspector) {
                 if ($agentOrDefinition->isArgumentsMap()) {
-                    $arguments = $this->resolveConstructorMap($constructorInspector, $agentOrDefinition);
+                    $arguments = $this->resolveMapArguments($constructorInspector, $agentOrDefinition);
                 } else {
-                    $arguments = $this->resolveConstructorList($constructorInspector, $agentOrDefinition);
+                    $arguments = $this->resolveListArguments($constructorInspector, $agentOrDefinition);
                 }
+                $beforeCreateEvent = new Event(
+                    DependencyDefinitionInterface::EVENT_BEFORE_CREATE,
+                    $arguments,
+                    $agentOrDefinition);
+                $agentOrDefinition->emitEvent($beforeCreateEvent);
                 $agentInstance = $classInspector->newInstanceArgs($arguments);
             } else {
+                $beforeCreateEvent = new Event(
+                    DependencyDefinitionInterface::EVENT_BEFORE_CREATE,
+                    [],
+                    $agentOrDefinition);
+                $agentOrDefinition->emitEvent($beforeCreateEvent);
                 $agentInstance = $classInspector->newInstance();
             }
+            $afterCreateEvent = new Event(
+                DependencyDefinitionInterface::EVENT_AFTER_CREATE,
+                $agentInstance,
+                $agentOrDefinition);
+            $agentOrDefinition->emitEvent($afterCreateEvent);
             return $agentInstance;
         } else {
             throw new UnexpectedVariableTypeException($agentOrDefinition);
@@ -127,39 +145,56 @@ class DI implements \axis\specification\di\DI
      * @throws CannotInstantiateException
      * @throws UnresolvedClassException
      */
-    private function resolveConstructorList(ReflectionMethod $constructorInspector, DependencyDefinitionInterface $definition)
+    protected function resolveListArguments(ReflectionMethod $constructorInspector, DependencyDefinitionInterface $definition)
     {
         $expectedArguments = $constructorInspector->getParameters();
-        if (count($definition->getArguments()) < count($expectedArguments)) {
-            $arguments = $definition->getArguments();
-            $missingArguments = array_slice($expectedArguments, count($definition->getArguments()));
-            foreach ($missingArguments as $argument) {
-                /* @var \ReflectionParameter $argument */
-                $argumentClass = $argument->getClass();
-                if (!$argumentClass) {
-                    if (!$argument->isOptional()) {
+        return $this->resolveMissingArguments($expectedArguments, $definition->getArguments(), $definition);
+    }
+
+    protected function resolveMapArguments(ReflectionMethod $constructorInspector, DependencyDefinitionInterface $definition)
+    {
+        $expectedArguments = $constructorInspector->getParameters();
+        $mapArguments = $definition->getArguments();
+        $arguments = [];
+        foreach ($expectedArguments as $expectedArgument) {
+            if (isset($mapArguments[$expectedArgument->name])) {
+                $arguments[$expectedArgument->getPosition()] = $mapArguments[$expectedArgument->name];
+            }
+        }
+        return $this->resolveMissingArguments($expectedArguments, $arguments, $definition);
+    }
+
+    /**
+     * @param \ReflectionParameter[] $expectedArguments
+     * @param array $arguments
+     * @param DependencyDefinitionInterface $definition
+     * @return array
+     * @throws CannotInstantiateException
+     * @throws UnresolvedClassException
+     */
+    protected function resolveMissingArguments($expectedArguments, array $arguments, DependencyDefinitionInterface $definition)
+    {
+        foreach ($expectedArguments as $position => $expectedArgument) {
+            if (!isset($arguments[$position])) {
+                $expectedArgumentClass = $expectedArgument->getClass();
+                if (!$expectedArgumentClass) {
+                    if (!$expectedArgument->isOptional()) {
                         throw new CannotInstantiateException($definition->getAgent(), 'is not enough arguments passed');
                     } else {
-                        $arguments[] = null;
+                        $arguments[$position] = $expectedArgument->getDefaultValue();
                     }
                 } else {
-                    if ($this->has($argumentClass->name)) {
-                        $dependency = $this->get($argumentClass->name);
+                    if ($this->has($expectedArgumentClass->name)) {
+                        $dependency = $this->get($expectedArgumentClass->name);
                         $arguments[] = $dependency;
-                    } elseif (!$argument->isOptional()) {
-                        throw new UnresolvedClassException($argumentClass->name);
+                    } elseif (!$expectedArgument->isOptional()) {
+                        throw new UnresolvedClassException($expectedArgumentClass->name);
                     } else {
-                        $arguments[] = null;
+                        $arguments[$position] = $expectedArgument->getDefaultValue();
                     }
                 }
             }
-            return $arguments;
         }
-        return null;
-    }
-
-    private function resolveConstructorMap()
-    {
-
+        return $arguments;
     }
 }
