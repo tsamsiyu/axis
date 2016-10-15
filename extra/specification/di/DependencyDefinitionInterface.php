@@ -11,6 +11,28 @@ interface DependencyDefinitionInterface extends EventEmitterInterface
     const EVENT_AFTER_CREATE = 'eventAfterCreate';
 
     /**
+     * @param array $map
+     * @return array
+     */
+    public function constructorMap(array $map);
+
+    /**
+     * @param array $list
+     * @return array
+     */
+    public function constructorList(array $list);
+
+    /**
+     * @return $this
+     */
+    public function singleton();
+
+    /**
+     * @return $this
+     */
+    public function prototype();
+
+    /**
      * @return string
      */
     public function getAgent();

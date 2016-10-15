@@ -49,23 +49,24 @@ class ContainerTest extends \Codeception\Test\Unit
             expect($car)->isInstanceOf(BMWCar::class);
         });
 
-//        $this->specify('must create singletons', function () {
-//            $container = new Container();
-//            $container->setSingleton(EngineInterface::class, FroEngine::class);
-//            $container->set(MotorOilInterface::class, CastrolMotorOil::class);
-//            $engine1 = $container->get(EngineInterface::class);
-//            $engine2 = $container->get(EngineInterface::class);
-//            $engine3 = $container->getSingleton(EngineInterface::class);
-//            $oil1 = $container->get(MotorOilInterface::class);
-//            $oil2 = $container->get(MotorOilInterface::class);
-//            expect($engine2 === $engine1)->true();
-//            expect($engine2 === $engine3)->true();
-//            expect($oil1 !== $oil2)->true();
-//        });
-//
-//        $this->specify('must configure container objects', function () {
-//            $container = new Container;
-//            $container->set(MotorOilInterface::class, CastrolMotorOil::class);
-//        });
+        $this->specify('must handle dependencies scope', function () {
+            $container = new DependencyInjector();
+            $container->set(CarInterface::class, BMWCar::class)->constructorMap([
+                'capacity' => 2.4,
+                'valves' => 16
+            ]);
+            $container->set(EngineInterface::class, FroEngine::class)->singleton();
+            $container->set(MotorOilInterface::class, CastrolMotorOil::class);
+            $engine1 = $container->get(EngineInterface::class);
+            $engine2 = $container->get(EngineInterface::class);
+            $engine3 = $container->getSingleton(EngineInterface::class);
+            $oil1 = $container->get(MotorOilInterface::class);
+            $oil2 = $container->get(MotorOilInterface::class);
+            $car = $container->get(CarInterface::class);
+            expect($engine2 === $engine1)->true();
+            expect($engine2 === $engine3)->true();
+            expect($oil1 !== $oil2)->true();
+            expect($car->engine === $engine1)->true();
+        });
     }
 }

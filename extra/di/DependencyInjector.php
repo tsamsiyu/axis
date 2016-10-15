@@ -4,7 +4,7 @@ use axis\events\Event;
 use axis\exceptions\CannotInstantiateException;
 use axis\exceptions\UnexpectedVariableTypeException;
 use axis\exceptions\UnresolvedClassException;
-use axis\specification\di\DependencyDefinitionInterface as DependencyDefinitionInterface;
+use axis\specification\di\DependencyDefinitionInterface;
 use axis\specification\di\DependencyInjectorInterface;
 use ReflectionClass;
 use ReflectionMethod;
@@ -16,15 +16,24 @@ class DependencyInjector implements DependencyInjectorInterface
      */
     private $_definitions = [];
     private $_singletons;
+    private $_dependencyDefinitionClass;
+
+    public function __construct($dependencyDefinitionClass = DependencyDefinition::class)
+    {
+        if (!is_subclass_of($dependencyDefinitionClass, DependencyDefinitionInterface::class)) {
+            throw new \InvalidArgumentException('Passed argument must be implementation of DependencyDefinitionInterface');
+        }
+        $this->_dependencyDefinitionClass = $dependencyDefinitionClass;
+    }
 
     /**
      * @param string $contract
      * @param string $agent
-     * @return DependencyDefinition
+     * @return DependencyDefinitionInterface
      */
     public function set(string $contract, string $agent)
     {
-        $definition = new DependencyDefinition($agent);
+        $definition = $this->createDependencyDefinition($agent);
         $this->_definitions[$contract] = $definition;
         return $definition;
     }
@@ -102,7 +111,7 @@ class DependencyInjector implements DependencyInjectorInterface
     public function resolve($agentOrDefinition)
     {
         if (is_string($agentOrDefinition)) {
-            $definition = new DependencyDefinition($agentOrDefinition);
+            $definition = $this->createDependencyDefinition($agentOrDefinition);
             return $this->resolve($definition);
         } else if ($agentOrDefinition instanceof DependencyDefinitionInterface) {
             $classInspector = new ReflectionClass($agentOrDefinition->getAgent());
@@ -196,5 +205,15 @@ class DependencyInjector implements DependencyInjectorInterface
             }
         }
         return $arguments;
+    }
+
+    /**
+     * @param $agent
+     * @return DependencyDefinitionInterface
+     */
+    private function createDependencyDefinition($agent)
+    {
+        $dependencyDefinitionClass = $this->_dependencyDefinitionClass;
+        return new $dependencyDefinitionClass($agent);
     }
 }
