@@ -31,7 +31,8 @@ interface DependencyInjectorInterface
 
     /**
      * @param string|DependencyDefinitionInterface $agent
+     * @param null $beforeInstantiate
      * @return object
      */
-    public function resolve($agent);
+    public function resolve($agent, $beforeInstantiate = null);
 }

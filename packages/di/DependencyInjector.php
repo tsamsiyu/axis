@@ -73,12 +73,12 @@ class DependencyInjector implements DependencyInjectorInterface
         $definition = $this->getDefinition($contract);
         if ($definition->isSingleton()) {
             if (!$this->hasInstantiatedSingleton($contract)) {
-                $agentInstance = $this->resolve($definition);
+                $agentInstance = $this->resolve($definition, $beforeInstantiate);
                 $this->_singletons[$contract] = $agentInstance;
             }
             return $this->_singletons[$contract];
         } else {
-            return $this->resolve($definition);
+            return $this->resolve($definition, $beforeInstantiate);
         }
     }
 
@@ -125,16 +125,15 @@ class DependencyInjector implements DependencyInjectorInterface
 
     /**
      * @param string|DependencyDefinitionInterface $agentOrDefinition
+     * @param null $beforeInstantiate
      * @return mixed
-     * @throws CannotInstantiateException
      * @throws UnexpectedVariableTypeException
-     * @throws UnresolvedClassException
      */
-    public function resolve($agentOrDefinition)
+    public function resolve($agentOrDefinition, $beforeInstantiate = null)
     {
         if (is_string($agentOrDefinition)) {
             $definition = $this->createDependencyDefinition($agentOrDefinition);
-            return $this->resolve($definition);
+            return $this->resolve($definition, $beforeInstantiate);
         } else if ($agentOrDefinition instanceof DependencyDefinitionInterface) {
             $classInspector = new ReflectionClass($agentOrDefinition->getAgent());
             $constructorInspector = $classInspector->getConstructor();
@@ -148,6 +147,9 @@ class DependencyInjector implements DependencyInjectorInterface
                     DependencyDefinitionInterface::EVENT_BEFORE_CREATE,
                     $arguments,
                     $agentOrDefinition);
+                if (is_callable($beforeInstantiate)) {
+                    call_user_func($beforeInstantiate, $arguments);
+                }
                 $agentOrDefinition->emitEvent($beforeCreateEvent);
                 $agentInstance = $classInspector->newInstanceArgs($arguments);
             } else {
@@ -156,6 +158,9 @@ class DependencyInjector implements DependencyInjectorInterface
                     [],
                     $agentOrDefinition);
                 $agentOrDefinition->emitEvent($beforeCreateEvent);
+                if (is_callable($beforeInstantiate)) {
+                    call_user_func($beforeInstantiate, []);
+                }
                 $agentInstance = $classInspector->newInstance();
             }
             $afterCreateEvent = new Event(
