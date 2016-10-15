@@ -1,6 +1,7 @@
 <?php namespace axis\di;
 
 use \axis\events\EventEmitterTrait;
+use axis\specification\di\DependencyDefinitionInterface;
 
 class DependencyDefinition implements DependencyDefinitionInterface
 {

@@ -3,35 +3,35 @@
 interface DependencyInjectorInterface
 {
     /**
-     * @param string $contract
-     * @param string $agent
+     * @param string|object|callable $contract
+     * @param string|object|null|callable $agent
      * @return DependencyDefinitionInterface
      */
-    public function set(string $contract, string $agent);
+    public function set($contract, $agent = null);
 
     /**
      * @param string $contract
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function get(string $contract, callable $beforeInstantiate = null);
+    public function get(string $contract, $beforeInstantiate = null);
 
     /**
      * @param string $contract
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function getSingleton(string $contract, callable $beforeInstantiate = null);
+    public function getSingleton(string $contract, $beforeInstantiate = null);
 
     /**
      * @param string $contract
-     * @return mixed
+     * @return bool
      */
     public function has(string $contract);
 
     /**
      * @param string|DependencyDefinitionInterface $agent
-     * @return mixed
+     * @return object
      */
     public function resolve($agent);
 }

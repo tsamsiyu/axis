@@ -11,7 +11,7 @@ use axis\tests\mocks\car\CarInterface;
 use axis\tests\mocks\car\BMWCar;
 use axis\tests\mocks\car\MotorOilInterface;
 
-class ContainerTest extends \Codeception\Test\Unit
+class DependencyInjectorTest extends \Codeception\Test\Unit
 {
     use Codeception\Specify;
 

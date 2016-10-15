@@ -20,7 +20,8 @@
       "axis\\specification\\": "./packages/specification",
       "axis\\di\\": "./packages/di",
       "axis\\events\\": "./packages/events",
-      "axis\\tests\\": "./tests"
+      "axis\\tests\\": "./tests",
+      "axis\\IoC\\": "./packages/IoC"
     }
   }
 }

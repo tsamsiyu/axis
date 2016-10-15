@@ -34,4 +34,26 @@ interface DependencyDefinitionInterface extends EventEmitterInterface
      * @return bool
      */
     public function isArgumentsMap();
+
+    /**
+     * @param array $map
+     * @return $this
+     */
+    public function constructorMap(array $map);
+
+    /**
+     * @param array $list
+     * @return $this
+     */
+    public function constructorList(array $list);
+
+    /**
+     * @return $this
+     */
+    public function singleton();
+
+    /**
+     * @return $this
+     */
+    public function prototype();
 }

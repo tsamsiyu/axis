@@ -4,6 +4,7 @@ use axis\events\Event;
 use axis\exceptions\CannotInstantiateException;
 use axis\exceptions\UnexpectedVariableTypeException;
 use axis\exceptions\UnresolvedClassException;
+use axis\specification\di\DependencyDefinitionInterface;
 use axis\specification\di\DependencyInjectorInterface;
 use ReflectionClass;
 use ReflectionMethod;
@@ -29,12 +30,34 @@ class DependencyInjector implements DependencyInjectorInterface
      * @param string $contract
      * @param string $agent
      * @return DependencyDefinitionInterface
+     * @throws UnexpectedVariableTypeException
      */
-    public function set(string $contract, string $agent)
+    public function set($contract, $agent = null)
     {
-        $definition = $this->createDependencyDefinition($agent);
-        $this->_definitions[$contract] = $definition;
-        return $definition;
+        if (is_string($contract) && is_string($agent)) {
+            $definition = $this->createDependencyDefinition($agent);
+            $this->_definitions[$contract] = $definition;
+            return $definition;
+        } else if (is_string($agent) && is_object($agent)) {
+            $definition = $this->createDependencyDefinition(get_class($agent));
+            $this->_definitions[$contract] = $definition;
+            $this->_singletons[$contract] = $agent;
+            return $definition;
+        } else if (is_string($agent) && is_callable($agent)) {
+            return $this->set($contract, call_user_func($agent, $this));
+        } else if (is_string($contract) && is_null($agent)) {
+            return $this->set($contract, $contract);
+        } else if (is_object($contract) && is_null($agent)) {
+            $class = get_class($contract);
+            $definition = $this->createDependencyDefinition($class);
+            $this->_definitions[$class] = $definition;
+            $this->_singletons[$class] = $contract;
+            return $definition;
+        } else if (is_callable($contract) && is_null($agent)) {
+            return $this->set(call_user_func($contract, $this));
+        } else {
+            throw new \InvalidArgumentException("Invalid combination of arguments");
+        }
     }
 
     /**
@@ -42,7 +65,7 @@ class DependencyInjector implements DependencyInjectorInterface
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function get(string $contract, callable $beforeInstantiate = null)
+    public function get(string $contract, $beforeInstantiate = null)
     {
         if (!$this->has($contract)) {
             throw new \InvalidArgumentException('Passed contract was not registered to create it: ' . $contract);
@@ -74,7 +97,7 @@ class DependencyInjector implements DependencyInjectorInterface
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function getSingleton(string $contract, callable $beforeInstantiate = null)
+    public function getSingleton(string $contract, $beforeInstantiate = null)
     {
         if (!$this->has($contract)) {
             throw new \InvalidArgumentException('Passed contract was not registered to create it: ' . $contract);
