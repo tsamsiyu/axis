@@ -15,11 +15,11 @@
   },
   "autoload": {
     "psr-4": {
-      "axis\\framework\\": "./extra/framework",
-      "axis\\exceptions\\": "./extra/exceptions",
-      "axis\\specification\\": "./extra/specification",
-      "axis\\di\\": "./extra/di",
-      "axis\\events\\": "./extra/events",
+      "axis\\framework\\": "./packages/framework",
+      "axis\\exceptions\\": "./packages/exceptions",
+      "axis\\specification\\": "./packages/specification",
+      "axis\\di\\": "./packages/di",
+      "axis\\events\\": "./packages/events",
       "axis\\tests\\": "./tests"
     }
   }
