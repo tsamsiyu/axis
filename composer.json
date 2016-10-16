@@ -21,7 +21,8 @@
       "axis\\di\\": "./packages/di",
       "axis\\events\\": "./packages/events",
       "axis\\tests\\": "./tests",
-      "axis\\IoC\\": "./packages/IoC"
+      "axis\\IoC\\": "./packages/IoC",
+      "axis\\store\\": "./packages/store"
     }
   }
 }
