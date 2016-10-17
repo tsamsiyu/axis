@@ -22,7 +22,8 @@
       "axis\\events\\": "./packages/events",
       "axis\\tests\\": "./tests",
       "axis\\IoC\\": "./packages/IoC",
-      "axis\\store\\": "./packages/store"
+      "axis\\store\\": "./packages/store",
+      "axis\\db\\": "./packages/db"
     }
   }
 }

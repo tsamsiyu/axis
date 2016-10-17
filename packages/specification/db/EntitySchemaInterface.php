@@ -1,6 +1,6 @@
-<?php namespace axis\specification\store;
+<?php namespace axis\specification\db;
 
-interface StoreEntitySchemaInterface
+interface EntitySchemaInterface
 {
     public function getPrimaryKey() : string;
 
