@@ -33,7 +33,7 @@ class ServiceLocator implements ServiceLocatorInterface
             $this->_definitions[$name] = [get_class($contract), $configuration];
             $this->_instances[$name] = $contract;
         } else if (is_callable($contract)) {
-            $this->set($name, call_user_func($contract, $this, $this->_di), $configuration);
+            $this->set($name, call_user_func($contract, $this->_di), $configuration);
         } else if (is_string($contract)) {
             $this->_definitions[$name] = [$contract, $configuration];
         } else {

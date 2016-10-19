@@ -1,8 +1,8 @@
 <?php namespace axis\db\schemas;
 
-use axis\db\AbstractSchema;
+use axis\db\Schema;
 
-class MySqlSchema extends AbstractSchema
+class MySqlSchema extends Schema
 {
 
 }

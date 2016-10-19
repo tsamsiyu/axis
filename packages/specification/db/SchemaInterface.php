@@ -2,5 +2,5 @@
 
 interface SchemaInterface
 {
-
+    public function __construct(ConnectorInterface $connector);
 }

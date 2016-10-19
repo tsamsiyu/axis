@@ -1,6 +1,6 @@
 <?php namespace axis\specification\db;
 
-interface ConnectionInterface
+interface CommandInterface
 {
     public function __construct(ConnectorInterface $connector);
 }
