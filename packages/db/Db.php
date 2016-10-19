@@ -27,24 +27,29 @@ class Db implements DbInterface
         $this->commandClass = $commandClass;
     }
 
-    public function newCommand() : CommandInterface
+    public function newCommand(string $sql = null, array $params = []) : CommandInterface
     {
-        return new $this->commandClass;
+        /* @var CommandInterface $command */
+        $command = new $this->commandClass($this->getConnector());
+        if ($sql) {
+            $command->setSql($sql);
+            if ($params) {
+                $command->bindValues($params);
+            }
+        }
+        return $command;
     }
 
     public function getSchema() : SchemaInterface
     {
         if (!isset($this->_schema)) {
-            $this->_schema = new $this->schemaClass;
+            $this->_schema = new $this->schemaClass($this->getConnector());
         }
         return $this->_schema;
     }
 
     public function getConnector() : ConnectorInterface
     {
-        if (!isset($this->_connector)) {
-            $this->_connector = new $this->_connector;
-        }
         return $this->_connector;
     }
 }

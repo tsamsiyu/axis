@@ -24,4 +24,18 @@ class DbTest extends Unit
             return new MySqlDb($connector);
         });
     }
+
+    public function testCommand()
+    {
+        $dsn = new Dsn('mysql', 'localhost', 'axisTests');
+        $connector = new MySqlConnector($dsn, 'tsamsiyu', '123');
+        $command = new MysqlCommand($connector);
+        $command->setSql('SELECT * FROM users WHERE id = :id')->bindValues([
+            ':id' => 1
+        ])->fetch();
+        $command->setSql('SELECT * FROM users WHERE rate > :rate')->bindValues([
+            ':rate' => 100
+        ])->fetchAll();
+        $command->setSql('SELECT email FROM users')->fetchColumn();
+    }
 }

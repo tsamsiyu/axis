@@ -2,5 +2,13 @@
 
 interface CommandInterface
 {
-    public function __construct(ConnectorInterface $connector);
+    public function setSql(string $sql, array $values = []) : self;
+
+    public function bindValues(array $values) : self;
+
+    public function fetch() : array;
+
+    public function fetchAll() : array;
+
+    public function fetchColumn() : array;
 }
