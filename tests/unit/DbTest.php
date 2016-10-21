@@ -1,41 +1,24 @@
 <?php
 
-use axis\db\commands\MysqlCommand;
-use axis\db\connectors\MySqlConnector;
-use axis\db\Db;
-use axis\db\dbs\MySqlDb;
+namespace tests\unit;
+
 use axis\db\Dsn;
-use axis\db\schemas\MySqlSchema;
-use axis\di\DependencyInjector;
-use axis\IoC\ServiceLocator;
+use axis\db\mysql\Connector;
+use axis\db\mysql\Db;
+use Codeception\Specify;
 use Codeception\Test\Unit;
 
 class DbTest extends Unit
 {
-    use Codeception\Specify;
+    use Specify;
 
-    public function testCreateConnection()
+    public function testMySqlConnection()
     {
-        $di = new DependencyInjector();
-        $services = new ServiceLocator($di);
-        $services->set('mysql', function () {
-            $dsn = new Dsn('mysql', 'localhost', 'axisTests');
-            $connector = new MySqlConnector($dsn, 'tsamsiyu', '123');
-            return new MySqlDb($connector);
-        });
-    }
-
-    public function testCommand()
-    {
-        $dsn = new Dsn('mysql', 'localhost', 'axisTests');
-        $connector = new MySqlConnector($dsn, 'tsamsiyu', '123');
-        $command = new MysqlCommand($connector);
-        $command->setSql('SELECT * FROM users WHERE id = :id')->bindValues([
-            ':id' => 1
-        ])->fetch();
-        $command->setSql('SELECT * FROM users WHERE rate > :rate')->bindValues([
-            ':rate' => 100
-        ])->fetchAll();
-        $command->setSql('SELECT email FROM users')->fetchColumn();
+        $dsn = new Dsn('mysql', 'localhost', 'axis_test');
+        $connector = new Connector($dsn, 'root', 'q');
+        $db = new Db($connector);
+        $usersTable = $db->getSchema()->getTableSchema('users');
+        expect($usersTable->getColumns())->count(2);
+        expect($usersTable->getColumn('id')->getTypeSize())->equals(11);
     }
 }

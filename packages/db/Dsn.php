@@ -4,13 +4,13 @@ use axis\specification\db\DsnInterface;
 
 class Dsn implements DsnInterface
 {
-    private $_port;
+    private $_port = 80;
     private $_host;
     private $_dbname;
     private $_driverName;
-    private $_charset;
+    private $_charset = 'utf8';
 
-    public function __construct(string $driverName, string $host, string $dbname, int $port = 80)
+    public function __construct(string $driverName, string $host, string $dbname)
     {
         $this->setDriverName($driverName)
             ->setHost($host)
@@ -74,15 +74,11 @@ class Dsn implements DsnInterface
 
     public function build() : string
     {
-        $dsn = $this->getDriverName() . ':host=' . $this->getHost();
-        if ($port = $this->getPort()) {
-            $dsn .= ":{$port}";
-        }
-        $dsn .= ';';
-        $dsn .= 'dbname=' . $this->getDbname();
-        if ($charset = $this->getCharset()) {
-            $dsn .= ";charset={$charset}";
-        }
+        $dsn = $this->getDriverName() . ':';
+        $dsn .= 'host=' . $this->getHost() . ';';
+        $dsn .= 'port=' . $this->getPort() . ';';
+        $dsn .= 'dbname=' . $this->getDbname() . ';';
+        $dsn .= 'charset=' . $this->getCharset() . ';';
         return $dsn;
     }
 }

@@ -2,5 +2,7 @@
 
 interface SchemaInterface
 {
-    public function __construct(ConnectorInterface $connector);
+    public function getTableSchema(string $tableName) : TableSchemaInterface;
+
+    public function quoteTableName(string $tableName) : string;
 }

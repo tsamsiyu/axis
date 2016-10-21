@@ -25,7 +25,13 @@ class Connector implements ConnectorInterface
     {
         if (!isset($this->_pdo)) {
             $this->_pdo = new PDO($this->_dsn, $this->_username, $this->_password);
+            $this->afterConnect($this->_pdo);
         }
         return $this->_pdo;
+    }
+
+    public function afterConnect(PDO $pdo)
+    {
+
     }
 }
