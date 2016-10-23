@@ -9,7 +9,6 @@ class Connector implements ConnectorInterface
     private $_dsn;
     private $_username;
     private $_password;
-    private $_pdo;
 
     public function __construct(DsnInterface $dsn, string $username, string $password)
     {
@@ -21,13 +20,11 @@ class Connector implements ConnectorInterface
         $this->_password = $password;
     }
 
-    public function getConnection() : PDO
+    public function connect() : PDO
     {
-        if (!isset($this->_pdo)) {
-            $this->_pdo = new PDO($this->_dsn, $this->_username, $this->_password);
-            $this->afterConnect($this->_pdo);
-        }
-        return $this->_pdo;
+        $pdo = new PDO($this->_dsn, $this->_username, $this->_password);
+        $this->afterConnect($pdo);
+        return $pdo;
     }
 
     public function afterConnect(PDO $pdo)

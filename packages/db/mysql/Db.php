@@ -7,11 +7,6 @@ use axis\specification\db\SchemaInterface;
 
 class Db extends AbstractDb
 {
-    function createCommand() : CommandInterface
-    {
-        return new Command($this->getConnector()->getConnection());
-    }
-
     function createSchema() : SchemaInterface
     {
         return new Schema($this);

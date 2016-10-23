@@ -24,7 +24,8 @@
       "axis\\IoC\\": "./packages/IoC",
       "axis\\store\\": "./packages/store",
       "axis\\db\\": "./packages/db",
-      "axis\\helpers\\": "./packages/helpers"
+      "axis\\helpers\\": "./packages/helpers",
+      "axis\\pdoQuery\\": "./packages/pdoQuery"
     }
   }
 }

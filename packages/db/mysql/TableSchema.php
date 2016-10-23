@@ -53,7 +53,7 @@ class TableSchema implements TableSchemaInterface
         $this->_columns = [];
         $this->_primaryKeys = [];
         $tableName = $this->_db->getSchema()->quoteTableName($this->_tableName);
-        $columns = $this->_db->newCommand('SHOW COLUMNS FROM ' . $tableName)->fetchAll();
+        $columns = $this->_db->query('SHOW COLUMNS FROM ' . $tableName)->fetchAll();
         foreach ($columns as $column) {
             $tableColumn = new TableColumn($column);
             $this->_columns[$tableColumn->getName()] = $tableColumn;

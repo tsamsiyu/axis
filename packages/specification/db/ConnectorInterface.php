@@ -4,5 +4,5 @@ use PDO;
 
 interface ConnectorInterface
 {
-    public function getConnection() : PDO;
+    public function connect() : PDO;
 }
