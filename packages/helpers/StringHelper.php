@@ -23,4 +23,18 @@ class StringHelper
         }
         return false;
     }
+
+    /**
+     * @param string $entity
+     * @param string $delimiter
+     * @return \Generator
+     */
+    public static function cutByPiece(string $entity, $delimiter = '.')
+    {
+        yield $entity;
+        while (($pos = strrpos($entity, $delimiter)) !== false) {
+            $entity = substr($entity, 0, $pos);
+            yield $entity;
+        }
+    }
 }

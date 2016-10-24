@@ -6,24 +6,20 @@ use axis\specification\db\SchemaInterface;
 use PDOStatement;
 use PDO;
 
-abstract class AbstractDb implements DbInterface
+class Db implements DbInterface
 {
     private $_connector;
     private $_schema;
     private $_pdo;
 
-    public function __construct(ConnectorInterface $connector)
+    public function __construct(ConnectorInterface $connector, SchemaInterface $schema)
     {
         $this->_connector = $connector;
+        $this->_schema = $schema;
     }
-
-    abstract function createSchema() : SchemaInterface;
 
     public function getSchema() : SchemaInterface
     {
-        if (!isset($this->_schema)) {
-            $this->_schema = $this->createSchema();
-        }
         return $this->_schema;
     }
 

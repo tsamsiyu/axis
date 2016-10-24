@@ -1,8 +1,20 @@
-<?php
+<?php namespace tests\unit;
 
+use axis\db\mysql\Connector;
+use axis\db\mysql\Db;
+use axis\db\mysql\Schema;
+use axis\db\mysql\TableColumn;
+use axis\db\mysql\TableSchema;
 use axis\di\DependencyInjector;
 use axis\exceptions\UnresolvedClassException;
+use axis\IoC\ServiceLocator;
+use axis\specification\db\ConnectorInterface;
+use axis\specification\db\DbInterface;
+use axis\specification\db\SchemaInterface;
+use axis\specification\db\TableColumnInterface;
+use axis\specification\db\TableSchemaInterface;
 use axis\specification\di\DependencyDefinitionInterface;
+use axis\specification\di\DependencyInjectorInterface;
 use axis\specification\events\EventInterface;
 use axis\tests\mocks\car\CastrolMotorOil;
 use axis\tests\mocks\car\EngineInterface;
@@ -13,7 +25,7 @@ use axis\tests\mocks\car\MotorOilInterface;
 
 class DependencyInjectorTest extends \Codeception\Test\Unit
 {
-    use Codeception\Specify;
+    use \Codeception\Specify;
 
     /**
      * @var \UnitTester
@@ -68,5 +80,35 @@ class DependencyInjectorTest extends \Codeception\Test\Unit
             expect($oil1 !== $oil2)->true();
             expect($car->engine === $engine1)->true();
         });
+    }
+
+    public function testScope()
+    {
+        $container = new DependencyInjector();
+        $container->set(DbInterface::class, Db::class);
+        $container->scope('app:mysql',  function (DependencyInjectorInterface $mysqlContainer) {
+            $mysqlContainer->set(ConnectorInterface::class, Connector::class);
+            $mysqlContainer->set(SchemaInterface::class, Schema::class);
+            $mysqlContainer->set(TableSchemaInterface::class, TableSchema::class);
+            $mysqlContainer->set(TableColumnInterface::class, TableColumn::class);
+        });
+
+////        TODO: think about it
+////        $container->set('DbInterface', 'Db')->scope('app:mysql');
+//
+//        $container->scope('app:mysql', function (DependencyInjectorInterface $mysqlContainer) {
+//            return $mysqlContainer->get(DbInterface::class); // create Db using mysql scope
+//        });
+//
+//        $container->scope('app:mysql')->get(DbInterface::class);
+//
+//        /** Service Locator */
+//
+//        $serviceLocator = new ServiceLocator($container);
+//        $serviceLocator->set('db[app:mysql]', DbInterface::class);
+//        $serviceLocator->set('db[app:mysql]', DbInterface::class); // error! service db is already exist
+//        $serviceLocator->set('pgsql[app:mysql]', DbInterface::class);
+//        $serviceLocator->get('db');
+//        $serviceLocator->get('db:pgsql');
     }
 }

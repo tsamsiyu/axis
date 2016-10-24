@@ -14,25 +14,32 @@ interface DependencyInjectorInterface
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function get(string $contract, $beforeInstantiate = null);
+    public function get(string $contract, callable $beforeInstantiate = null);
 
     /**
      * @param string $contract
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function getSingleton(string $contract, $beforeInstantiate = null);
+    public function getSingleton(string $contract, callable $beforeInstantiate = null);
 
     /**
      * @param string $contract
      * @return bool
      */
-    public function has(string $contract);
+    public function has(string $contract) : bool;
 
     /**
      * @param string|DependencyDefinitionInterface $agent
-     * @param null $beforeInstantiate
+     * @param callable|null $beforeInstantiate
      * @return object
      */
-    public function resolve($agent, $beforeInstantiate = null);
+    public function resolve($agent, callable $beforeInstantiate = null);
+
+    /**
+     * @param string $scope
+     * @param callable $scopeClosure
+     * @return void
+     */
+    public function scope(string $scope, callable $scopeClosure);
 }

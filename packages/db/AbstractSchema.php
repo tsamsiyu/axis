@@ -1,31 +1,24 @@
 <?php namespace axis\db;
 
-use axis\specification\db\DbInterface;
 use axis\specification\db\SchemaInterface;
 use axis\specification\db\TableSchemaInterface;
 
 abstract class AbstractSchema implements SchemaInterface
 {
     private $_tables;
-    private $_db;
-
-    public function __construct(DbInterface $db)
-    {
-        $this->_db = $db;
-    }
-
-    abstract public function createTableSchema(string $tableName) : TableSchemaInterface;
 
     public function getTableSchema(string $tableName) : TableSchemaInterface
     {
         if (!isset($this->_tables[$tableName])) {
-            $this->_tables[$tableName] = $this->createTableSchema($tableName);
+            $this->_tables[$tableName] = $this->injectTableSchema($tableName);
         }
         return $this->_tables[$tableName];
     }
 
-    public function getDb() : DbInterface
+    public function quoteTableName(string $tableName) : string
     {
-        return $this->_db;
+        // TODO: Implement quoteTableName() method.
     }
+
+    abstract public function quoteSign() : string;
 }

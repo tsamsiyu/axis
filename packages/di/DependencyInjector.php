@@ -4,6 +4,7 @@ use axis\events\Event;
 use axis\exceptions\CannotInstantiateException;
 use axis\exceptions\UnexpectedVariableTypeException;
 use axis\exceptions\UnresolvedClassException;
+use axis\helpers\StringHelper as Str;
 use axis\specification\di\DependencyDefinitionInterface;
 use axis\specification\di\DependencyInjectorInterface;
 use ReflectionClass;
@@ -11,12 +12,17 @@ use ReflectionMethod;
 
 class DependencyInjector implements DependencyInjectorInterface
 {
+    const ROOT_SCOPE = 'rootScope';
+
+    public $scopeDelimiter = ':';
+
     /**
      * @var DependencyDefinitionInterface[]
      */
     private $_definitions = [];
     private $_singletons;
     private $_dependencyDefinitionClass;
+    private $_currentScope = self::ROOT_SCOPE;
 
     public function __construct($dependencyDefinitionClass = DependencyDefinition::class)
     {
@@ -35,24 +41,16 @@ class DependencyInjector implements DependencyInjectorInterface
     public function set($contract, $agent = null)
     {
         if (is_string($contract) && is_string($agent)) {
-            $definition = $this->createDependencyDefinition($agent);
-            $this->_definitions[$contract] = $definition;
-            return $definition;
+            return $this->addDependencyDefinition($contract, $agent);
         } else if (is_string($agent) && is_object($agent)) {
-            $definition = $this->createDependencyDefinition(get_class($agent));
-            $this->_definitions[$contract] = $definition;
-            $this->_singletons[$contract] = $agent;
-            return $definition;
+            $this->addSingleton($contract, $agent);
+            return $this->addDependencyDefinition($contract, get_class($agent));
         } else if (is_string($agent) && is_callable($agent)) {
             return $this->set($contract, call_user_func($agent, $this));
         } else if (is_string($contract) && is_null($agent)) {
             return $this->set($contract, $contract);
         } else if (is_object($contract) && is_null($agent)) {
-            $class = get_class($contract);
-            $definition = $this->createDependencyDefinition($class);
-            $this->_definitions[$class] = $definition;
-            $this->_singletons[$class] = $contract;
-            return $definition;
+            return $this->set(get_class($contract), $contract);
         } else if (is_callable($contract) && is_null($agent)) {
             return $this->set(call_user_func($contract, $this));
         } else {
@@ -65,31 +63,40 @@ class DependencyInjector implements DependencyInjectorInterface
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function get(string $contract, $beforeInstantiate = null)
+    public function get(string $contract, callable $beforeInstantiate = null)
     {
-        if (!$this->has($contract)) {
+        list($scope, $definition) = $this->getDefinition($contract);
+        if (!$definition instanceof DependencyDefinitionInterface) {
             throw new \InvalidArgumentException('Passed contract was not registered to create it: ' . $contract);
         }
-        $definition = $this->getDefinition($contract);
         if ($definition->isSingleton()) {
-            if (!$this->hasInstantiatedSingleton($contract)) {
+            if (!isset($this->_singletons[$scope][$contract])) {
                 $agentInstance = $this->resolve($definition, $beforeInstantiate);
-                $this->_singletons[$contract] = $agentInstance;
+                $this->_singletons[$scope][$contract] = $agentInstance;
             }
-            return $this->_singletons[$contract];
+            return $this->_singletons[$scope][$contract];
         } else {
             return $this->resolve($definition, $beforeInstantiate);
         }
     }
 
+    /**
+     * @param string $contract
+     * @return array|null
+     */
     public function getDefinition(string $contract)
     {
-        return $this->_definitions[$contract];
+        foreach (Str::cutByPiece($this->_currentScope, ':') as $scope) {
+            if (isset($this->_definitions[$scope][$contract])) {
+                return [$scope, $this->_definitions[$scope][$contract]];
+            }
+        }
+        return [null, null];
     }
 
     public function hasInstantiatedSingleton($contract)
     {
-        return isset($this->_singletons[$contract]);
+        return isset($this->_singletons[$this->_currentScope][$contract]);
     }
 
     /**
@@ -97,20 +104,20 @@ class DependencyInjector implements DependencyInjectorInterface
      * @param callable|null $beforeInstantiate
      * @return mixed
      */
-    public function getSingleton(string $contract, $beforeInstantiate = null)
+    public function getSingleton(string $contract, callable $beforeInstantiate = null)
     {
-        if (!$this->has($contract)) {
+        list($scope, $definition) = $this->getDefinition($contract);
+        if (!$definition instanceof DependencyDefinitionInterface) {
             throw new \InvalidArgumentException('Passed contract was not registered to create it: ' . $contract);
         }
-        $definition = $this->getDefinition($contract);
         if ($definition->isSingleton()) {
             return $this->get($contract);
         } else {
-            if (!$this->hasInstantiatedSingleton($contract)) {
+            if (!isset($this->_singletons[$scope][$contract])) {
                 $agentInstance = $this->get($contract);
-                $this->_singletons[$contract] = $agentInstance;
+                $this->_singletons[$scope][$contract] = $agentInstance;
             }
-            return $this->_singletons[$contract];
+            return $this->_singletons[$scope][$contract];
         }
     }
 
@@ -118,46 +125,51 @@ class DependencyInjector implements DependencyInjectorInterface
      * @param string $contract
      * @return mixed
      */
-    public function has(string $contract)
+    public function has(string $contract) : bool
     {
-        return isset($this->_definitions[$contract]);
+        foreach (Str::cutByPiece($this->_currentScope, ':') as $remainedPiece) {
+            if (isset($this->_definitions[$remainedPiece][$contract])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
-     * @param string|DependencyDefinitionInterface $agentOrDefinition
-     * @param null $beforeInstantiate
+     * @param string|DependencyDefinitionInterface $agentDefinition
+     * @param callable|null $beforeInstantiate
      * @return mixed
      * @throws UnexpectedVariableTypeException
      */
-    public function resolve($agentOrDefinition, $beforeInstantiate = null)
+    public function resolve($agentDefinition, callable $beforeInstantiate = null)
     {
-        if (is_string($agentOrDefinition)) {
-            $definition = $this->createDependencyDefinition($agentOrDefinition);
+        if (is_string($agentDefinition)) {
+            $definition = $this->createDependencyDefinition($agentDefinition);
             return $this->resolve($definition, $beforeInstantiate);
-        } else if ($agentOrDefinition instanceof DependencyDefinitionInterface) {
-            $classInspector = new ReflectionClass($agentOrDefinition->getAgent());
+        } else if ($agentDefinition instanceof DependencyDefinitionInterface) {
+            $classInspector = new ReflectionClass($agentDefinition->getAgent());
             $constructorInspector = $classInspector->getConstructor();
             if ($constructorInspector) {
-                if ($agentOrDefinition->isArgumentsMap()) {
-                    $arguments = $this->resolveMapArguments($constructorInspector, $agentOrDefinition);
+                if ($agentDefinition->isArgumentsMap()) {
+                    $arguments = $this->resolveMapArguments($constructorInspector, $agentDefinition);
                 } else {
-                    $arguments = $this->resolveListArguments($constructorInspector, $agentOrDefinition);
+                    $arguments = $this->resolveListArguments($constructorInspector, $agentDefinition);
                 }
                 $beforeCreateEvent = new Event(
                     DependencyDefinitionInterface::EVENT_BEFORE_CREATE,
                     $arguments,
-                    $agentOrDefinition);
+                    $agentDefinition);
                 if (is_callable($beforeInstantiate)) {
                     call_user_func($beforeInstantiate, $arguments);
                 }
-                $agentOrDefinition->emitEvent($beforeCreateEvent);
+                $agentDefinition->emitEvent($beforeCreateEvent);
                 $agentInstance = $classInspector->newInstanceArgs($arguments);
             } else {
                 $beforeCreateEvent = new Event(
                     DependencyDefinitionInterface::EVENT_BEFORE_CREATE,
                     [],
-                    $agentOrDefinition);
-                $agentOrDefinition->emitEvent($beforeCreateEvent);
+                    $agentDefinition);
+                $agentDefinition->emitEvent($beforeCreateEvent);
                 if (is_callable($beforeInstantiate)) {
                     call_user_func($beforeInstantiate, []);
                 }
@@ -166,11 +178,11 @@ class DependencyInjector implements DependencyInjectorInterface
             $afterCreateEvent = new Event(
                 DependencyDefinitionInterface::EVENT_AFTER_CREATE,
                 $agentInstance,
-                $agentOrDefinition);
-            $agentOrDefinition->emitEvent($afterCreateEvent);
+                $agentDefinition);
+            $agentDefinition->emitEvent($afterCreateEvent);
             return $agentInstance;
         } else {
-            throw new UnexpectedVariableTypeException($agentOrDefinition);
+            throw new UnexpectedVariableTypeException($agentDefinition);
         }
     }
 
@@ -238,9 +250,36 @@ class DependencyInjector implements DependencyInjectorInterface
      * @param $agent
      * @return DependencyDefinitionInterface
      */
-    private function createDependencyDefinition($agent)
+    private function createDependencyDefinition($agent) : DependencyDefinitionInterface
     {
         $dependencyDefinitionClass = $this->_dependencyDefinitionClass;
         return new $dependencyDefinitionClass($agent);
+    }
+
+    private function addDependencyDefinition(string $contract, $agent) : DependencyDefinitionInterface
+    {
+        if (is_string($agent)) {
+            $agent = $this->createDependencyDefinition($agent);
+        }
+        $this->_definitions[$this->_currentScope][$contract] = $agent;
+        return $agent;
+    }
+
+    private function addSingleton(string $contract, $obj)
+    {
+        $this->_singletons[$this->_currentScope][$contract] = $obj;
+    }
+
+    /**
+     * @param string $scope
+     * @param callable|null $scopeClosure
+     * @return void
+     */
+    public function scope(string $scope, callable $scopeClosure)
+    {
+        $oldScope = $this->_currentScope;
+        $this->_currentScope = ($oldScope ? ($oldScope . ':') : '') . $scope;
+        call_user_func($scopeClosure, $this, $scope);
+        $this->_currentScope = $oldScope;
     }
 }
